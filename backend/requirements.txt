@@ -1,7 +1,0 @@
-   Flask
-   flask-sock
-   pandas
-   numpy
-   requests
-   gunicorn
-   gevent
