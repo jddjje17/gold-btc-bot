@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>توصيات الذهب والبيتكوين</title>
+    <style>
+        body { background: #0d1117; color: #c9d1d9; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 10px; }
+        h1 { color: #f0c040; text-align: center; }
+        .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
+        .chart-box { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px; flex: 1 1 500px; min-width: 350px; }
+        #status { color: #8b949e; text-align: center; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>📊 الذهب & البيتكوين – تحليل حي</h1>
+    <div id="status">جاري تحميل البيانات...</div>
+    <div class="container">
+        <div class="chart-box"><h3>XAU/USD</h3><div id="chart-gold" style="width:100%;height:400px;"></div></div>
+        <div class="chart-box"><h3>BTC/USD</h3><div id="chart-btc" style="width:100%;height:400px;"></div></div>
+    </div>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <script>
+        function createChart(containerId) {
+            const container = document.getElementById(containerId);
+            const chart = LightweightCharts.createChart(container, {
+                width: container.clientWidth, height: 400,
+                layout: { background: { color: '#161b22' }, textColor: '#c9d1d9' },
+                grid: { vertLines: { color: '#30363d' }, horzLines: { color: '#30363d' } },
+                crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+                rightPriceScale: { borderColor: '#30363d' },
+                timeScale: { borderColor: '#30363d', timeVisible: true },
+            });
+            const candleSeries = chart.addCandlestickSeries({
+                upColor: '#00b894', downColor: '#d63031',
+                borderUpColor: '#00b894', borderDownColor: '#d63031',
+                wickUpColor: '#00b894', wickDownColor: '#d63031',
+            });
+            return { chart, candleSeries };
+        }
+
+        const gold = createChart('chart-gold');
+        const btc = createChart('chart-btc');
+
+        const ws = new WebSocket(`wss://${window.location.host}/ws`);
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            document.getElementById('status').innerText = 'آخر تحديث: ' + new Date().toLocaleTimeString();
+            if (data.xauusd) updateChart(gold, data.xauusd);
+            if (data.btcusd) updateChart(btc, data.btcusd);
+        };
+
+        function updateChart(chartObj, symbolData) {
+            const { candleSeries } = chartObj;
+            const candles = symbolData.candles.map(c => ({
+                time: c.time, open: c.open, high: c.high, low: c.low, close: c.close
+            }));
+            candleSeries.setData(candles);
+        }
+    </script>
+</body>
+</html>
